@@ -1,0 +1,6 @@
+rq
+redis
+yfinance
+psycopg2-binary
+SQLAlchemy
+python-dotenv

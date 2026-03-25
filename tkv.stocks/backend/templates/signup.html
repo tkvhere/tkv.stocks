@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Tkv.stocks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <i class="fas fa-chart-line" style="margin-right: 0.5rem;"></i>
+                    Tkv.Stocks
+                </div>
+                <h1>Create Account</h1>
+                <p>Join Tkv.stocks and start your investment journey</p>
+            </div>
+
+            <form class="auth-form" id="signupForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" placeholder="Create a password" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" class="form-input" placeholder="Confirm your password" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label style="display: flex; align-items: flex-start; color: var(--text-secondary); cursor: pointer; font-size: 0.875rem;">
+                        <input type="checkbox" style="margin-right: 0.5rem; margin-top: 0.25rem;" required>
+                        <span>I agree to the <a href="#" style="color: var(--primary); text-decoration: none;">Terms of Service</a> and <a href="#" style="color: var(--primary); text-decoration: none;">Privacy Policy</a></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-user-plus" style="margin-right: 0.5rem;"></i>
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Already have an account?</p>
+                <a href="{{ url_for('login') }}">Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Basic password confirmation check
+            const password = this.querySelector('input[type="password"]').value;
+            const confirmPassword = this.querySelectorAll('input[type="password"]')[1].value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            // Add loading state
+            const submitBtn = this.querySelector('.auth-submit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Creating Account...';
+            submitBtn.disabled = true;
+            
+            // Simulate signup process
+            setTimeout(() => {
+                // Redirect to login or dashboard
+                window.location.href = "{{ url_for('login') }}";
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

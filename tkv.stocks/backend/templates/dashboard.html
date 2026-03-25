@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Tkv.stocks{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">
+        <i class="fas fa-tachometer-alt" style="margin-right: 0.5rem;"></i>
+        Dashboard
+    </h1>
+    <p class="dashboard-subtitle">Welcome to Tkv.stocks. Monitor your portfolio, analyze market data, and make informed investment decisions.</p>
+</div>
+
+<div class="grid grid-3" id="dashboard-stats">
+    <!-- Stats will be loaded dynamically -->
+    <div class="card stat-card">
+        <span class="stat-value"><span class="loading"></span></span>
+        <span class="stat-label">Loading...</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value"><span class="loading"></span></span>
+        <span class="stat-label">Loading...</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value"><span class="loading"></span></span>
+        <span class="stat-label">Loading...</span>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-top: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-rocket"></i>
+                Quick Actions
+            </h3>
+        </div>
+        <div class="grid grid-2">
+            <a href="{{ url_for('portfolio') }}" class="btn btn-primary">
+                <i class="fas fa-briefcase"></i>
+                View Portfolio
+            </a>
+            <a href="{{ url_for('data') }}" class="btn btn-secondary">
+                <i class="fas fa-download"></i>
+                Fetch Data
+            </a>
+            <button class="btn btn-success" onclick="document.getElementById('quick-upload').click()">
+                <i class="fas fa-upload"></i>
+                Upload CSV
+            </button>
+            <a href="{{ url_for('analytics') }}" class="btn btn-secondary">
+                <i class="fas fa-chart-line"></i>
+                Analytics
+            </a>
+        </div>
+        <input type="file" id="quick-upload" accept=".csv" style="display: none;">
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-bell"></i>
+                Recent Activity
+            </h3>
+        </div>
+        <div class="activity-feed">
+            <div class="activity-item">
+                <i class="fas fa-check-circle text-green-500"></i>
+                <div>
+                    <p style="color: var(--text-primary);"><strong>System Status:</strong> All services operational</p>
+                    <small class="text-gray-500">Last checked: <span id="last-check">Just now</span></small>
+                </div>
+            </div>
+            <div class="activity-item">
+                <i class="fas fa-clock text-blue-500"></i>
+                <div>
+                    <p style="color: var(--text-primary);"><strong>Scheduled Fetch:</strong> Daily at 1:00 AM</p>
+                    <small class="text-gray-500">Next run in <span id="next-run">calculating...</span></small>
+                </div>
+            </div>
+            <div class="activity-item">
+                <i class="fas fa-database text-purple-500"></i>
+                <div>
+                    <p style="color: var(--text-primary);"><strong>Database:</strong> Connected and ready</p>
+                    <small class="text-gray-500">PostgreSQL + Redis</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-info-circle"></i>
+            Getting Started
+        </h3>
+    </div>
+    <div class="grid grid-3">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h4>Import Portfolio</h4>
+            <p>Upload your portfolio CSV from Groww, Zerodha, or other brokers to get started.</p>
+            <a href="{{ url_for('portfolio') }}" class="btn btn-primary">Import Now</a>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h4>Fetch Data</h4>
+            <p>Download historical price data for your stocks to enable analysis and predictions.</p>
+            <a href="{{ url_for('data') }}" class="btn btn-primary">Fetch Data</a>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h4>Analyze & Predict</h4>
+            <p>Use our analytics tools to analyze trends and make informed investment decisions.</p>
+            <a href="{{ url_for('analytics') }}" class="btn btn-primary">Start Analysis</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.step-card {
+    text-align: center;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin: 0 auto 1rem;
+    box-shadow: var(--glow);
+}
+
+.step-card h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.step-card p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.text-green-500 { color: var(--success); }
+.text-blue-500 { color: var(--primary); }
+.text-purple-500 { color: #8b5cf6; }
+.text-gray-500 { color: var(--text-muted); }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update time displays
+function updateTimeDisplays() {
+    const now = new Date();
+    document.getElementById('last-check').textContent = now.toLocaleTimeString();
+    
+    // Calculate next 1 AM
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(1, 0, 0, 0);
+    
+    const diff = tomorrow - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    document.getElementById('next-run').textContent = `${hours}h ${minutes}m`;
+}
+
+updateTimeDisplays();
+setInterval(updateTimeDisplays, 60000); // Update every minute
+</script>
+{% endblock %}

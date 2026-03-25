@@ -1,0 +1,14 @@
+Flask
+psycopg2-binary
+SQLAlchemy
+alembic
+pandas
+yfinance
+requests
+redis
+rq
+python-dotenv
+scikit-learn
+joblib
+Flask-SQLAlchemy
+APScheduler

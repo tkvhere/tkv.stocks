@@ -1,0 +1,13 @@
+# from repository root
+docker compose up -d
+# check backend health
+curl http://localhost:5000/health
+# stop
+docker compose down
+
+
+
+functional dependencies
+primary key
+remove all the functional dependencies
+customer wise profit of ech product

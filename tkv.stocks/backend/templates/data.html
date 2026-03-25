@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management - Tkv.stocks{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-database"></i>
+            Data Management
+        </h1>
+        <p class="page-subtitle">Fetch, manage, and monitor your stock market data</p>
+    </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-download"></i>
+                Fetch Stock Data
+            </h3>
+            <span class="card-subtitle">Download historical prices</span>
+        </div>
+        <form id="fetch-form">
+            <div class="form-group">
+                <label class="form-label">Stock Symbol</label>
+                <input type="text" id="symbol-input" class="form-input" placeholder="e.g., TCS.NS, AAPL, GOOGL" required>
+                <small>Enter one or multiple symbols separated by commas</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Date Range</label>
+                <div class="grid grid-2">
+                    <input type="date" class="form-input" placeholder="Start Date" value="2020-01-01">
+                    <input type="date" class="form-input" placeholder="End Date">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-download"></i>
+                Fetch Data
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-list"></i>
+                Popular Indian Stocks
+            </h3>
+            <span class="card-subtitle">Quick fetch for common stocks</span>
+        </div>
+        <div class="popular-stocks">
+            <div class="stock-grid">
+                <button class="stock-btn" data-symbol="TCS.NS">
+                    <strong>TCS</strong>
+                    <small>Tata Consultancy</small>
+                </button>
+                <button class="stock-btn" data-symbol="RELIANCE.NS">
+                    <strong>RELIANCE</strong>
+                    <small>Reliance Industries</small>
+                </button>
+                <button class="stock-btn" data-symbol="INFY.NS">
+                    <strong>INFY</strong>
+                    <small>Infosys</small>
+                </button>
+                <button class="stock-btn" data-symbol="HDFCBANK.NS">
+                    <strong>HDFCBANK</strong>
+                    <small>HDFC Bank</small>
+                </button>
+                <button class="stock-btn" data-symbol="ITC.NS">
+                    <strong>ITC</strong>
+                    <small>ITC Limited</small>
+                </button>
+                <button class="stock-btn" data-symbol="HINDUNILVR.NS">
+                    <strong>HINDUNILVR</strong>
+                    <small>Hindustan Unilever</small>
+                </button>
+                <button class="stock-btn" data-symbol="ICICIBANK.NS">
+                    <strong>ICICIBANK</strong>
+                    <small>ICICI Bank</small>
+                </button>
+                <button class="stock-btn" data-symbol="SBIN.NS">
+                    <strong>SBIN</strong>
+                    <small>State Bank of India</small>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-clock"></i>
+            Scheduled Fetching
+        </h3>
+        <span class="badge badge-success">Active</span>
+    </div>
+    <div class="grid grid-2">
+        <div>
+            <h5>Current Schedule</h5>
+            <p>Daily at <strong>1:00 AM IST</strong></p>
+            <p>Configured symbols: <code id="scheduled-symbols">Loading...</code></p>
+            <p>Next run: <span id="next-scheduled-run">Calculating...</span></p>
+        </div>
+        <div>
+            <h5>Configuration</h5>
+            <div class="form-group">
+                <label class="form-label">Auto-fetch Symbols</label>
+                <input type="text" class="form-input" id="schedule-symbols" placeholder="TCS.NS,RELIANCE.NS,INFY.NS">
+                <small>Comma-separated list of symbols to fetch daily</small>
+            </div>
+            <button class="btn btn-secondary">
+                <i class="fas fa-save"></i>
+                Update Schedule
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-chart-bar"></i>
+            Data Statistics
+        </h3>
+    </div>
+    <div id="data-stats" class="grid grid-4">
+        <div class="stat-card">
+            <span class="stat-value"><span class="loading"></span></span>
+            <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value"><span class="loading"></span></span>
+            <span class="stat-label">Unique Symbols</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value"><span class="loading"></span></span>
+            <span class="stat-label">Date Range</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value"><span class="loading"></span></span>
+            <span class="stat-label">Last Updated</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-table"></i>
+            Recent Data
+        </h3>
+        <button class="btn btn-secondary" onclick="refreshDataTable()">
+            <i class="fas fa-sync"></i>
+            Refresh
+        </button>
+    </div>
+    <div id="recent-data-table">
+        <div style="text-align: center; padding: 2rem;">
+            <span class="loading"></span>
+            <p>Loading recent data...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.popular-stocks {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.stock-btn {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.stock-btn:hover {
+    background: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.stock-btn strong {
+    display: block;
+    color: var(--dark);
+    font-size: 0.875rem;
+}
+
+.stock-btn small {
+    display: block;
+    color: var(--secondary);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.fetch-progress {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--light);
+    border-radius: 8px;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Handle fetch form submission
+document.getElementById('fetch-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const symbolInput = document.getElementById('symbol-input');
+    const symbols = symbolInput.value.split(',').map(s => s.trim()).filter(s => s);
+    
+    if (symbols.length === 0) {
+        window.stockPredictor.showError('Please enter at least one symbol');
+        return;
+    }
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading"></span> Fetching...';
+    
+    for (const symbol of symbols) {
+        await window.stockPredictor.fetchStock(symbol);
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-download"></i> Fetch Data';
+    symbolInput.value = '';
+    refreshDataStats();
+});
+
+// Handle popular stock buttons
+document.querySelectorAll('.stock-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const symbol = btn.dataset.symbol;
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        
+        await window.stockPredictor.fetchStock(symbol);
+        
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        refreshDataStats();
+    });
+});
+
+async function refreshDataStats() {
+    // This would typically fetch from a /api/stats endpoint
+    // For now, we'll show placeholder data
+    const statsContainer = document.getElementById('data-stats');
+    statsContainer.innerHTML = `
+        <div class="stat-card">
+            <span class="stat-value">12,847</span>
+            <span class="stat-label">Total Records</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">25</span>
+            <span class="stat-label">Unique Symbols</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">5 Years</span>
+            <span class="stat-label">Date Range</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">Just now</span>
+            <span class="stat-label">Last Updated</span>
+        </div>
+    `;
+}
+
+async function refreshDataTable() {
+    const tableContainer = document.getElementById('recent-data-table');
+    
+    // Show loading state
+    tableContainer.innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+            <span class="loading"></span>
+            <p>Loading recent data...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`${window.location.origin}/api/recent-data`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error('Failed to load data');
+        }
+
+        if (data.length === 0) {
+            tableContainer.innerHTML = `
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Date</th>
+                                <th>Open</th>
+                                <th>High</th>
+                                <th>Low</th>
+                                <th>Close</th>
+                                <th>Volume</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" style="text-align: center; padding: 2rem;">No recent data available. Fetch some stock data to see records here.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            return;
+        }
+
+        // Group data by symbol for better display
+        const groupedData = {};
+        data.forEach(item => {
+            if (!groupedData[item.symbol]) {
+                groupedData[item.symbol] = [];
+            }
+            groupedData[item.symbol].push(item);
+        });
+
+        let tableRows = '';
+        Object.keys(groupedData).slice(0, 20).forEach(symbol => {
+            const latestRecord = groupedData[symbol][0]; // Most recent
+            tableRows += `
+                <tr>
+                    <td><strong>${latestRecord.symbol}</strong></td>
+                    <td>${latestRecord.date}</td>
+                    <td>₹${latestRecord.open.toFixed(2)}</td>
+                    <td>₹${latestRecord.high.toFixed(2)}</td>
+                    <td>₹${latestRecord.low.toFixed(2)}</td>
+                    <td>₹${latestRecord.close.toFixed(2)}</td>
+                    <td>${(latestRecord.volume / 1000000).toFixed(2)}M</td>
+                </tr>
+            `;
+        });
+
+        tableContainer.innerHTML = `
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Date</th>
+                            <th>Open</th>
+                            <th>High</th>
+                            <th>Low</th>
+                            <th>Close</th>
+                            <th>Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <small class="text-secondary">Showing latest records from ${Object.keys(groupedData).length} stocks</small>
+            </div>
+        `;
+
+    } catch (error) {
+        tableContainer.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--danger);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p><strong>Error loading data</strong></p>
+                <small>${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+// Update scheduled symbols display
+function updateScheduleInfo() {
+    const scheduledSymbols = 'TCS.NS, RELIANCE.NS'; // This would come from backend
+    document.getElementById('scheduled-symbols').textContent = scheduledSymbols;
+    
+    // Calculate next 1 AM
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(1, 0, 0, 0);
+    
+    const diff = tomorrow - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    document.getElementById('next-scheduled-run').textContent = `${hours}h ${minutes}m`;
+    document.getElementById('schedule-symbols').value = scheduledSymbols;
+}
+
+// Initialize
+refreshDataStats();
+refreshDataTable();
+updateScheduleInfo();
+setInterval(updateScheduleInfo, 60000); // Update every minute
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - Tkv.stocks{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">
+        <i class="fas fa-briefcase" style="margin-right: 0.5rem;"></i>
+        Portfolio Management
+    </h1>
+    <p class="dashboard-subtitle">Import, manage, and track your stock holdings with advanced analytics</p>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-upload"></i>
+                Import Portfolio
+            </h3>
+            <span class="card-subtitle">Upload CSV from your broker</span>
+        </div>
+        <div class="file-upload" onclick="document.getElementById('portfolio-upload').click()">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h4>Drop your CSV file here</h4>
+            <p>or click to browse</p>
+            <small style="color: var(--text-muted);">Supports Groww, Zerodha, and other standard formats</small>
+        </div>
+        <input type="file" id="portfolio-upload" accept=".csv" style="display: none;">
+        
+        <div style="margin-top: 1rem;">
+            <h5>Expected CSV Format:</h5>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Quantity</th>
+                            <th>Avg. Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>TCS.NS</td>
+                            <td>10</td>
+                            <td>3500.50</td>
+                        </tr>
+                        <tr>
+                            <td>RELIANCE.NS</td>
+                            <td>5</td>
+                            <td>2400.25</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-plus"></i>
+                Manual Entry
+            </h3>
+            <span class="card-subtitle">Add stocks manually</span>
+        </div>
+        <form id="manual-entry-form">
+            <div class="form-group">
+                <label class="form-label">Stock Symbol</label>
+                <input type="text" class="form-input" placeholder="e.g., TCS.NS" required>
+                <small style="color: var(--text-muted);">Use .NS for NSE stocks, .BO for BSE</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-input" placeholder="e.g., 10" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Average Price</label>
+                <input type="number" step="0.01" class="form-input" placeholder="e.g., 3500.50" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add to Portfolio
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="holdings-container">
+    <!-- Holdings will be loaded dynamically -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-pie"></i>
+                Your Holdings
+            </h3>
+            <span class="loading"></span>
+        </div>
+        <p style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+            Loading your portfolio...
+        </p>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-tools"></i>
+            Portfolio Actions
+        </h3>
+    </div>
+    <div class="grid grid-4">
+        <button class="btn btn-primary" onclick="window.stockPredictor.refreshHoldings()">
+            <i class="fas fa-sync"></i>
+            Refresh Data
+        </button>
+        <button class="btn btn-success" onclick="fetchAllHoldings()">
+            <i class="fas fa-download"></i>
+            Fetch All Prices
+        </button>
+        <button class="btn btn-secondary" onclick="exportPortfolio()">
+            <i class="fas fa-file-export"></i>
+            Export CSV
+        </button>
+        <button class="btn btn-danger" onclick="clearPortfolio()">
+            <i class="fas fa-trash"></i>
+            Clear All
+        </button>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-lightbulb"></i>
+            Portfolio Tips
+        </h3>
+    </div>
+    <div class="grid grid-2">
+        <div>
+            <h5 style="color: var(--text-primary);"><i class="fas fa-check-circle" style="color: var(--success);"></i> Best Practices</h5>
+            <ul style="margin-left: 1rem; color: var(--text-secondary);">
+                <li>Keep your portfolio updated regularly</li>
+                <li>Use consistent symbol formats (.NS for NSE)</li>
+                <li>Fetch historical data for better analysis</li>
+                <li>Set up automated daily updates</li>
+            </ul>
+        </div>
+        <div>
+            <h5 style="color: var(--text-primary);"><i class="fas fa-info-circle" style="color: var(--primary);"></i> Supported Formats</h5>
+            <ul style="margin-left: 1rem; color: var(--text-secondary);">
+                <li>NSE stocks: SYMBOL.NS (e.g., TCS.NS)</li>
+                <li>BSE stocks: SYMBOL.BO (e.g., TCS.BO)</li>
+                <li>US stocks: SYMBOL (e.g., AAPL, GOOGL)</li>
+                <li>Other markets: Check Yahoo Finance</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function fetchAllHoldings() {
+    try {
+        const response = await fetch('/holdings');
+        const holdings = await response.json();
+        
+        for (const holding of holdings) {
+            await window.stockPredictor.fetchStock(holding.symbol);
+            // Add small delay to avoid overwhelming the API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        window.stockPredictor.showSuccess(`Fetched data for ${holdings.length} stocks`);
+    } catch (error) {
+        window.stockPredictor.showError(`Failed to fetch all holdings: ${error.message}`);
+    }
+}
+
+function exportPortfolio() {
+    fetch('/holdings')
+        .then(response => response.json())
+        .then(holdings => {
+            const csv = [
+                ['Symbol', 'Quantity', 'Avg Price'],
+                ...holdings.map(h => [h.symbol, h.qty, h.avg])
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `portfolio_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            window.stockPredictor.showSuccess('Portfolio exported successfully');
+        })
+        .catch(error => {
+            window.stockPredictor.showError(`Export failed: ${error.message}`);
+        });
+}
+
+// Handle manual entry form
+document.getElementById('manual-entry-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const symbol = formData.get('symbol');
+    const quantity = formData.get('quantity');
+    const avgPrice = formData.get('avgPrice');
+    
+    // This would need a backend endpoint to add individual holdings
+    window.stockPredictor.showError('Manual entry feature requires additional backend implementation');
+});
+</script>
+{% endblock %}

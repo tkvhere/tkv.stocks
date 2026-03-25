@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stockdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - '6380:6379'
+
+  backend:
+    build: ./backend
+    # Ensure start.sh runs correctly even when mounted from Windows (fixes missing execute bit / CRLF issues)
+    command: sh -c "chmod +x /usr/src/app/start.sh || true && sh /usr/src/app/start.sh"
+    env_file: .env
+    # For reliable container startup use the image copy of the app files.
+    # During development you may re-enable the volume mount below to hot-reload local changes:
+    # volumes:
+    #   - ./backend:/usr/src/app
+    ports:
+      - '5001:5000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+
+  worker:
+    build: ./worker
+    command: python worker.py
+    env_file: .env
+    # volumes:
+    #   - ./backend:/usr/src/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: on-failure
+
+volumes:
+  db_data:

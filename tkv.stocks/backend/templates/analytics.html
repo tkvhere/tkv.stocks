@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Tkv.stocks{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-chart-line"></i>
+            Analytics & Predictions
+        </h1>
+        <p class="page-subtitle">Analyze market trends and generate predictions using AI/ML models</p>
+    </div>
+</div>
+
+<!-- Portfolio Overview Cards -->
+<div class="grid grid-3" style="margin-bottom: 2rem;">
+    <div class="card stat-card">
+        <span class="stat-value" id="portfolio-value">Loading...</span>
+        <span class="stat-label">Total Portfolio Value</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value" id="portfolio-stocks">Loading...</span>
+        <span class="stat-label">Total Stocks</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-value" id="avg-position">Loading...</span>
+        <span class="stat-label">Average Position Size</span>
+    </div>
+</div>
+
+<!-- Portfolio Composition Chart -->
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-pie-chart"></i>
+                Portfolio Composition
+            </h3>
+        </div>
+        <canvas id="portfolioCompositionChart" width="400" height="400"></canvas>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-list"></i>
+                Top Holdings
+            </h3>
+        </div>
+        <div id="top-holdings-list">
+            <div class="loading-spinner">Loading holdings...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Holdings Table -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-table"></i>
+            All Holdings
+        </h3>
+    </div>
+    <div class="table-container">
+        <table class="table" id="holdings-table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Quantity</th>
+                    <th>Avg Price</th>
+                    <th>Investment Value</th>
+                    <th>Portfolio %</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="holdings-table-body">
+                <tr>
+                    <td colspan="6" class="text-center">Loading holdings...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-search"></i>
+            Stock Analysis
+        </h3>
+    </div>
+    <div class="grid grid-2">
+        <div class="form-group">
+            <label class="form-label">Select Stock from Portfolio</label>
+            <select id="analysis-symbol" class="form-input">
+                <option value="">Choose a stock...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Analysis Period</label>
+            <select id="analysis-period" class="form-input">
+                <option value="1M">1 Month</option>
+                <option value="3M">3 Months</option>
+                <option value="6M" selected>6 Months</option>
+                <option value="1Y">1 Year</option>
+                <option value="2Y">2 Years</option>
+            </select>
+        </div>
+    </div>
+    <button class="btn btn-primary" onclick="loadAnalysis()">
+        <i class="fas fa-chart-line"></i>
+        Generate Analysis
+    </button>
+</div>
+
+<div class="grid grid-2" style="margin-bottom: 2rem;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-chart-area"></i>
+                Price Chart
+            </h3>
+        </div>
+        <div class="chart-container" id="price-chart">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--secondary);">
+                <div style="text-align: center;">
+                    <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>Select a stock to view price chart</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-calculator"></i>
+                Technical Indicators
+            </h3>
+        </div>
+        <div id="technical-indicators">
+            <div class="indicator-grid">
+                <div class="indicator-item">
+                    <span class="indicator-label">RSI (14)</span>
+                    <span class="indicator-value">--</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">MACD</span>
+                    <span class="indicator-value">--</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">SMA (20)</span>
+                    <span class="indicator-value">--</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">EMA (50)</span>
+                    <span class="indicator-value">--</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">Bollinger Bands</span>
+                    <span class="indicator-value">--</span>
+                </div>
+                <div class="indicator-item">
+                    <span class="indicator-label">Volume SMA</span>
+                    <span class="indicator-value">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-robot"></i>
+            AI Predictions
+        </h3>
+        <span class="badge badge-warning">Beta</span>
+    </div>
+    <div class="grid grid-3">
+        <div class="prediction-card">
+            <h5>Next Day Prediction</h5>
+            <div class="prediction-value">
+                <span class="price">₹--</span>
+                <span class="change">-- (-%)</span>
+            </div>
+            <small>Confidence: --%</small>
+        </div>
+        <div class="prediction-card">
+            <h5>1 Week Forecast</h5>
+            <div class="prediction-value">
+                <span class="price">₹--</span>
+                <span class="change">-- (-%)</span>
+            </div>
+            <small>Confidence: --%</small>
+        </div>
+        <div class="prediction-card">
+            <h5>1 Month Outlook</h5>
+            <div class="prediction-value">
+                <span class="price">₹--</span>
+                <span class="change">-- (-%)</span>
+            </div>
+            <small>Confidence: --%</small>
+        </div>
+    </div>
+    <div style="margin-top: 1rem;">
+        <button class="btn btn-primary" onclick="generatePredictions()">
+            <i class="fas fa-magic"></i>
+            Generate Predictions
+        </button>
+        <button class="btn btn-secondary" onclick="trainModel()">
+            <i class="fas fa-brain"></i>
+            Train New Model
+        </button>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-trophy"></i>
+                Model Performance
+            </h3>
+        </div>
+        <div class="performance-metrics">
+            <div class="metric-item">
+                <span class="metric-label">Accuracy</span>
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: 0%"></div>
+                </div>
+                <span class="metric-value">--%</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Precision</span>
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: 0%"></div>
+                </div>
+                <span class="metric-value">--%</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Recall</span>
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: 0%"></div>
+                </div>
+                <span class="metric-value">--%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-history"></i>
+                Recent Predictions
+            </h3>
+        </div>
+        <div class="predictions-history">
+            <div class="history-item">
+                <div class="history-info">
+                    <strong>TCS.NS</strong>
+                    <small>2 hours ago</small>
+                </div>
+                <div class="history-result">
+                    <span class="predicted">₹3,456</span>
+                    <span class="actual">₹3,445</span>
+                    <span class="accuracy badge badge-success">98.2%</span>
+                </div>
+            </div>
+            <div class="history-item">
+                <div class="history-info">
+                    <strong>RELIANCE.NS</strong>
+                    <small>4 hours ago</small>
+                </div>
+                <div class="history-result">
+                    <span class="predicted">₹2,234</span>
+                    <span class="actual">₹2,289</span>
+                    <span class="accuracy badge badge-warning">97.6%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chart-container {
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 350px;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+.chart-container canvas {
+    max-height: 100% !important;
+    height: 100% !important;
+}
+
+.indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.indicator-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--light);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.indicator-label {
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.indicator-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.prediction-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--light);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.prediction-card h5 {
+    margin-bottom: 1rem;
+    color: var(--dark);
+}
+
+.prediction-value {
+    margin-bottom: 0.5rem;
+}
+
+.prediction-value .price {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.prediction-value .change {
+    font-size: 0.875rem;
+    color: var(--success);
+}
+
+.metric-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.metric-label {
+    min-width: 80px;
+    font-weight: 500;
+}
+
+.metric-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.metric-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s;
+}
+
+.metric-value {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 600;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--light);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.history-info strong {
+    display: block;
+    color: var(--dark);
+}
+
+.history-info small {
+    color: var(--secondary);
+}
+
+.history-result {
+    text-align: right;
+}
+
+.history-result span {
+    display: block;
+    font-size: 0.875rem;
+}
+
+.predicted {
+    color: var(--secondary);
+}
+
+.actual {
+    color: var(--dark);
+    font-weight: 600;
+}
+</style>
+<style>
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.holding-item:last-child {
+    border-bottom: none !important;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+#portfolioCompositionChart {
+    max-height: 400px;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
